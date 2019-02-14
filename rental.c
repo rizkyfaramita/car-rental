@@ -28,7 +28,7 @@
 /* Event function for arrival of the bus to terminal 1. */
 void arrival_person_terminal_1 () {
 	transfer[1] = sim_time;
-	transfer[2] = DESTINATION_TERMINAL_2;
+	transfer[2] = DESTINATION_CAR_RENTAL;
 	list_file(LAST, LIST_TERMINAL_1);
 
 	event_schedule(sim_time + expon(14, STREAM_INTERARRIVAL_TERMINAL_1), EVENT_ARRIVAL_PERSON_TERMINAL_1);
@@ -37,7 +37,7 @@ void arrival_person_terminal_1 () {
 /* Event function for arrival of the bus to terminal 2. */
 void arrival_person_terminal_2 () {
 	transfer[1] = sim_time;
-	transfer[2] = DESTINATION_CAR_RENTAL;
+	transfer[2] = DESTINATION_TERMINAL_1;
 	list_file(LAST, LIST_TERMINAL_2);
 
 	event_schedule(sim_time + expon(10, STREAM_INTERARRIVAL_TERMINAL_2), EVENT_ARRIVAL_PERSON_TERMINAL_2);
@@ -46,7 +46,7 @@ void arrival_person_terminal_2 () {
 /* Event function for arrival of the bus to terminal 2. */
 void arrival_person_car_rental () {
 	transfer[1] = sim_time;
-	transfer[2] = DESTINATION_TERMINAL_1;
+	transfer[2] = DESTINATION_TERMINAL_2;
 	list_file(LAST, LIST_CAR_RENTAL);
 
 	event_schedule(sim_time + expon(24, STREAM_INTERARRIVAL_CAR_RENTAL), EVENT_ARRIVAL_PERSON_CAR_RENTAL);
