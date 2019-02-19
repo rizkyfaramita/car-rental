@@ -1,11 +1,8 @@
 #include "simlib.h"
 
-/* Event type assignments. */
-
-#define EVENT_ARRIVAL_PERSON_TERMINAL_1   1	/* Event type for arrival of the bus to terminal 1. */
-#define EVENT_ARRIVAL_PERSON_TERMINAL_2   2	/* Event type for arrival of the bus to terminal 2. */
-#define EVENT_ARRIVAL_PERSON_CAR_RENTAL   3	/* Event type for arrival of the bus to car rental. */
-
+#define EVENT_ARRIVAL_PERSON_TERMINAL_1   1
+#define EVENT_ARRIVAL_PERSON_TERMINAL_2   2
+#define EVENT_ARRIVAL_PERSON_CAR_RENTAL   3
 #define EVENT_ARRIVAL_BUS_TERMINAL_1      4
 #define EVENT_ARRIVAL_BUS_TERMINAL_2      5
 #define EVENT_ARRIVAL_BUS_CAR_RENTAL      6
@@ -18,16 +15,14 @@
 #define EVENT_LOAD_PERSON_TERMINAL_1      13
 #define EVENT_LOAD_PERSON_TERMINAL_2      14
 #define EVENT_LOAD_PERSON_CAR_RENTAL      15
-
 #define EVENT_END_SIMULATION              16
-/* Random-number stream assignments. */
 
-#define STREAM_INTERARRIVAL_TERMINAL_1  1	/* Random-number stream for interarrival time at terminal 1. */
-#define STREAM_INTERARRIVAL_TERMINAL_2  2	/* Random-number stream for interarrival time at terminal 2. */
-#define STREAM_INTERARRIVAL_CAR_RENTAL  3	/* Random-number stream for interarrival time at car rental. */
-#define STREAM_UNLOADING                4	/* Random-number stream for unloading times. */
-#define STREAM_LOADING                  5	/* Random-number stream for loading times. */
-#define STREAM_DESTINATION              6	/* Random-number stream for determining destination of an arrival at the car rental. */
+#define STREAM_INTERARRIVAL_TERMINAL_1  1
+#define STREAM_INTERARRIVAL_TERMINAL_2  2
+#define STREAM_INTERARRIVAL_CAR_RENTAL  3
+#define STREAM_UNLOADING                4
+#define STREAM_LOADING                  5
+#define STREAM_DESTINATION              6
 
 #define DESTINATION_TERMINAL_1 1
 #define DESTINATION_TERMINAL_2 2
@@ -57,21 +52,21 @@
 #define VARIABLE_PERSON_SYSTEM 12
 
 #define MAX_BUS_SIZE 20
-/* GLOBAL VARIABEL */
+
 double bus_last_arrival = 0.0;
 
 int list_bus_size() {return list_size[LIST_BUS_TO_TERMINAL_1] + list_size[LIST_BUS_TO_TERMINAL_2] + list_size[LIST_BUS_TO_CAR_RENTAL]; }
 
 double max(double a, double b) { return a > b ? a : b; }
 
-/* Event function for arrival of the bus to terminal 1. */
-/* TERMINAL 1 */
 void arrival_person_terminal_1 () {
 	transfer[DATA_ARRIVAL_TIME] = sim_time;
 	transfer[DATA_DESTINATION] = DESTINATION_CAR_RENTAL;
 	list_file(LAST, LIST_TERMINAL_1);
 
-	event_schedule(sim_time + expon(14, STREAM_INTERARRIVAL_TERMINAL_1), EVENT_ARRIVAL_PERSON_TERMINAL_1);
+  timest(list_size[LIST_TERMINAL_1], VARIABLE_NQ_TERMINAL_1);
+
+	event_schedule(sim_time + expon(60.0 * 60.0 / 14.0, STREAM_INTERARRIVAL_TERMINAL_1), EVENT_ARRIVAL_PERSON_TERMINAL_1);
 }
 
 void arrival_bus_terminal_1() {
@@ -108,6 +103,7 @@ void unload_person_terminal_1() {
 
 void load_person_terminal_1() {
   list_remove(FIRST, LIST_TERMINAL_1);
+  timest(list_size[LIST_TERMINAL_1], VARIABLE_NQ_TERMINAL_1);
   list_file(LAST, LIST_BUS_TO_CAR_RENTAL);
   if (list_size[LIST_TERMINAL_1] > 0 && list_bus_size() < MAX_BUS_SIZE) {
     event_schedule(sim_time + uniform(15, 25, STREAM_LOADING), EVENT_LOAD_PERSON_TERMINAL_1);
@@ -116,14 +112,12 @@ void load_person_terminal_1() {
   }
 }
 
-/* Event function for arrival of the bus to terminal 2. */
-/* TERMINAL 2 */
 void arrival_person_terminal_2 () {
 	transfer[DATA_ARRIVAL_TIME] = sim_time;
 	transfer[DATA_DESTINATION] = DESTINATION_CAR_RENTAL;
 	list_file(LAST, LIST_TERMINAL_2);
 
-	event_schedule(sim_time + expon(10, STREAM_INTERARRIVAL_TERMINAL_2), EVENT_ARRIVAL_PERSON_TERMINAL_2);
+	event_schedule(sim_time + expon(60.0 * 60.0 / 10.0, STREAM_INTERARRIVAL_TERMINAL_2), EVENT_ARRIVAL_PERSON_TERMINAL_2);
 }
 
 void arrival_bus_terminal_2() {
@@ -168,8 +162,6 @@ void load_person_terminal_2() {
   }
 }
 
-/* Event function for arrival of the bus to terminal 2. */
-/* CAR RENTAL */
 void arrival_person_car_rental () {
 	transfer[DATA_ARRIVAL_TIME] = sim_time;
 
@@ -181,7 +173,7 @@ void arrival_person_car_rental () {
 
 	list_file(LAST, LIST_CAR_RENTAL);
 
-	event_schedule(sim_time + expon(24, STREAM_INTERARRIVAL_CAR_RENTAL), EVENT_ARRIVAL_PERSON_CAR_RENTAL);
+	event_schedule(sim_time + expon(60.0 * 60.0 / 24.0, STREAM_INTERARRIVAL_CAR_RENTAL), EVENT_ARRIVAL_PERSON_CAR_RENTAL);
 }
 
 void arrival_bus_car_rental() {
@@ -217,9 +209,9 @@ void unload_person_car_rental() {
 }
 
 void load_person_car_rental() {
-  list_remove(FIRST, LIST_TERMINAL_2);
+  list_remove(FIRST, LIST_CAR_RENTAL);
   list_file(LAST, LIST_BUS_TO_CAR_RENTAL);
-  if (list_size[LIST_TERMINAL_2] > 0 && list_bus_size() < MAX_BUS_SIZE) {
+  if (list_size[LIST_CAR_RENTAL] > 0 && list_bus_size() < MAX_BUS_SIZE) {
     event_schedule(sim_time + uniform(15, 25, STREAM_LOADING), EVENT_LOAD_PERSON_CAR_RENTAL);
   }else {
     event_schedule(sim_time, EVENT_DEPARTURE_BUS_CAR_RENTAL);
@@ -227,22 +219,83 @@ void load_person_car_rental() {
 }
 
 void init_model() {
-	event_schedule(sim_time + expon(14, STREAM_INTERARRIVAL_TERMINAL_1), EVENT_ARRIVAL_PERSON_TERMINAL_1);
-	event_schedule(sim_time + expon(10, STREAM_INTERARRIVAL_TERMINAL_2), EVENT_ARRIVAL_PERSON_TERMINAL_2);
-	event_schedule(sim_time + expon(24, STREAM_INTERARRIVAL_CAR_RENTAL), EVENT_ARRIVAL_PERSON_CAR_RENTAL);
+	event_schedule(sim_time + expon(60.0 * 60.0 / 14.0, STREAM_INTERARRIVAL_TERMINAL_1), EVENT_ARRIVAL_PERSON_TERMINAL_1);
+	event_schedule(sim_time + expon(60.0 * 60.0 / 10.0, STREAM_INTERARRIVAL_TERMINAL_2), EVENT_ARRIVAL_PERSON_TERMINAL_2);
+	event_schedule(sim_time + expon(60.0 * 60.0 / 24.0, STREAM_INTERARRIVAL_CAR_RENTAL), EVENT_ARRIVAL_PERSON_CAR_RENTAL);
   event_schedule(sim_time + 4.5 / 30.0 * 60.0 * 60.0, EVENT_ARRIVAL_BUS_TERMINAL_1); 
   event_schedule(sim_time + 80.0 * 60.0 * 60.0, EVENT_END_SIMULATION);
+
+  sampst(0, VARIABLE_NQ_TERMINAL_1);
+  sampst(0, VARIABLE_NQ_TERMINAL_2);
+  sampst(0, VARIABLE_NQ_CAR_RENTAL);
+  sampst(0, VARIABLE_DELAY_TERMINAL_1);
+  sampst(0, VARIABLE_DELAY_TERMINAL_2);
+  sampst(0, VARIABLE_DELAY_CAR_RENTAL);
+  sampst(0, VARIABLE_NQ_BUS);
+  sampst(0, VARIABLE_BUS_STOP_TERMINAL_1);
+  sampst(0, VARIABLE_BUS_STOP_TERMINAL_2);
+  sampst(0, VARIABLE_BUS_STOP_CAR_RENTAL);
+  sampst(0, VARIABLE_BUS_LOOP);
+  sampst(0, VARIABLE_PERSON_SYSTEM);
 }
 
-/* Main function. */
+void log_event() {
+  switch(next_event_type) {
+    case EVENT_ARRIVAL_PERSON_TERMINAL_1:
+      printf("[ %.2lf ] EVENT_ARRIVAL_PERSON_TERMINAL_1\n", sim_time);      
+      break;
+    case EVENT_ARRIVAL_PERSON_TERMINAL_2:
+      printf("[ %.2lf ] EVENT_ARRIVAL_PERSON_TERMINAL_2\n", sim_time);      
+      break;
+    case EVENT_ARRIVAL_PERSON_CAR_RENTAL:
+      printf("[ %.2lf ] EVENT_ARRIVAL_PERSON_CAR_RENTAL\n", sim_time);      
+      break;
+    case EVENT_ARRIVAL_BUS_TERMINAL_1:
+        printf("[ %.2lf ] EVENT_ARRIVAL_BUS_TERMINAL_1\n", sim_time);     
+        break;
+    case EVENT_ARRIVAL_BUS_TERMINAL_2:
+      printf("[ %.2lf ] EVENT_ARRIVAL_BUS_TERMINAL_2\n", sim_time);     
+      break;
+    case EVENT_ARRIVAL_BUS_CAR_RENTAL:
+      printf("[ %.2lf ] EVENT_ARRIVAL_BUS_CAR_RENTAL\n", sim_time);     
+      break;
+    case EVENT_DEPARTURE_BUS_TERMINAL_1:
+      printf("[ %.2lf ] EVENT_DEPARTURE_BUS_TERMINAL_1\n", sim_time);     
+      break;
+    case EVENT_DEPARTURE_BUS_TERMINAL_2:
+      printf("[ %.2lf ] EVENT_DEPARTURE_BUS_TERMINAL_2\n", sim_time);     
+      break;
+    case EVENT_DEPARTURE_BUS_CAR_RENTAL:
+      printf("[ %.2lf ] EVENT_DEPARTURE_BUS_CAR_RENTAL\n", sim_time);     
+      break;
+    case EVENT_UNLOAD_PERSON_TERMINAL_1:
+      printf("[ %.2lf ] EVENT_UNLOAD_PERSON_TERMINAL_1\n", sim_time);     
+      break;
+    case EVENT_UNLOAD_PERSON_TERMINAL_2:
+      printf("[ %.2lf ] EVENT_UNLOAD_PERSON_TERMINAL_2\n", sim_time);     
+      break;
+    case EVENT_UNLOAD_PERSON_CAR_RENTAL:
+      printf("[ %.2lf ] EVENT_UNLOAD_PERSON_CAR_RENTAL\n", sim_time);     
+      break;
+    case EVENT_LOAD_PERSON_TERMINAL_1:
+        printf("[ %.2lf ] EVENT_LOAD_PERSON_TERMINAL_1\n", sim_time);     
+        break;
+    case EVENT_LOAD_PERSON_TERMINAL_2:
+      printf("[ %.2lf ] EVENT_LOAD_PERSON_TERMINAL_2\n", sim_time);     
+      break;
+    case EVENT_LOAD_PERSON_CAR_RENTAL:
+      printf("[ %.2lf ] EVENT_LOAD_PERSON_CAR_RENTAL\n", sim_time);     
+      break;
+  }
+}
+
 int main () {
 	printf("start time: %.5f",sim_time);
-	/* Initialize simlib */
 	init_simlib ();
-	
 	init_model();
 	while (next_event_type != EVENT_END_SIMULATION) {
 		timing();
+    log_event();
 		switch(next_event_type) {
 			case EVENT_ARRIVAL_PERSON_TERMINAL_1:
 				arrival_person_terminal_1();
@@ -292,6 +345,7 @@ int main () {
     }
 	}
 
+  out_timest(stdout, VARIABLE_NQ_TERMINAL_1, VARIABLE_NQ_TERMINAL_1);
 	printf("Finish time: %.5f\n", sim_time);
 	return 0;
 }
