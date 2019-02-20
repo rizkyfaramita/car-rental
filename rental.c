@@ -54,6 +54,7 @@
 #define MAX_BUS_SIZE 20
 
 double bus_last_arrival = 0.0;
+double bus_last_departure_car_rental = 0.0;
 
 int list_bus_size() {return list_size[LIST_BUS_TO_TERMINAL_1] + list_size[LIST_BUS_TO_TERMINAL_2] + list_size[LIST_BUS_TO_CAR_RENTAL]; }
 
@@ -84,6 +85,7 @@ void departure_bus_terminal_1() {
   if ((sim_time - bus_last_arrival) < (5.0 * 60.0)){
     event_schedule(bus_last_arrival + 5.0 * 60.0, EVENT_DEPARTURE_BUS_TERMINAL_1);
   }else {
+    sampst((sim_time - bus_last_arrival), VARIABLE_BUS_STOP_TERMINAL_1);
     event_schedule(sim_time + 1.0 / 30.0 * 60.0 * 60.0, EVENT_ARRIVAL_BUS_TERMINAL_2);
   }
 }
@@ -91,6 +93,8 @@ void departure_bus_terminal_1() {
 void unload_person_terminal_1() {
   
   list_remove(FIRST, LIST_BUS_TO_TERMINAL_1);
+  timest(list_bus_size(), VARIABLE_NQ_BUS);
+  sampst(sim_time - transfer[DATA_ARRIVAL_TIME], VARIABLE_PERSON_SYSTEM);
 
   if (list_size[LIST_BUS_TO_TERMINAL_1] > 0) {
     event_schedule(sim_time + uniform(16, 24, STREAM_UNLOADING), EVENT_UNLOAD_PERSON_TERMINAL_1);
@@ -104,7 +108,10 @@ void unload_person_terminal_1() {
 void load_person_terminal_1() {
   list_remove(FIRST, LIST_TERMINAL_1);
   timest(list_size[LIST_TERMINAL_1], VARIABLE_NQ_TERMINAL_1);
+  // printf("sampst %.2lf - %.2lf = %.2lf delay terminal 1\n", sim_time, transfer[DATA_ARRIVAL_TIME], sim_time - transfer[DATA_ARRIVAL_TIME]);
+  sampst((sim_time - transfer[DATA_ARRIVAL_TIME]), VARIABLE_DELAY_TERMINAL_1);
   list_file(LAST, LIST_BUS_TO_CAR_RENTAL);
+  timest(list_bus_size(), VARIABLE_NQ_BUS);
   if (list_size[LIST_TERMINAL_1] > 0 && list_bus_size() < MAX_BUS_SIZE) {
     event_schedule(sim_time + uniform(15, 25, STREAM_LOADING), EVENT_LOAD_PERSON_TERMINAL_1);
   }else {
@@ -116,6 +123,8 @@ void arrival_person_terminal_2 () {
 	transfer[DATA_ARRIVAL_TIME] = sim_time;
 	transfer[DATA_DESTINATION] = DESTINATION_CAR_RENTAL;
 	list_file(LAST, LIST_TERMINAL_2);
+
+  timest(list_size[LIST_TERMINAL_2], VARIABLE_NQ_TERMINAL_2);
 
 	event_schedule(sim_time + expon(60.0 * 60.0 / 10.0, STREAM_INTERARRIVAL_TERMINAL_2), EVENT_ARRIVAL_PERSON_TERMINAL_2);
 }
@@ -135,6 +144,7 @@ void departure_bus_terminal_2() {
   if ((sim_time - bus_last_arrival) < (5.0 * 60.0)){
     event_schedule(bus_last_arrival + 5.0 * 60.0, EVENT_DEPARTURE_BUS_TERMINAL_2);
   }else {
+    sampst((sim_time - bus_last_arrival), VARIABLE_BUS_STOP_TERMINAL_2);
     event_schedule(sim_time + 4.5 / 30.0 * 60.0 * 60.0, EVENT_ARRIVAL_BUS_CAR_RENTAL);
   }
 }
@@ -142,6 +152,8 @@ void departure_bus_terminal_2() {
 void unload_person_terminal_2() {
   
   list_remove(FIRST, LIST_BUS_TO_TERMINAL_2);
+  timest(list_bus_size(), VARIABLE_NQ_BUS);
+  sampst(sim_time - transfer[DATA_ARRIVAL_TIME], VARIABLE_PERSON_SYSTEM);
 
   if (list_size[LIST_BUS_TO_TERMINAL_2] > 0) {
     event_schedule(sim_time + uniform(16, 24, STREAM_UNLOADING), EVENT_UNLOAD_PERSON_TERMINAL_2);
@@ -154,7 +166,10 @@ void unload_person_terminal_2() {
 
 void load_person_terminal_2() {
   list_remove(FIRST, LIST_TERMINAL_2);
+  timest(list_size[LIST_TERMINAL_2], VARIABLE_NQ_TERMINAL_2);
+  sampst((sim_time - transfer[DATA_ARRIVAL_TIME]), VARIABLE_DELAY_TERMINAL_2);
   list_file(LAST, LIST_BUS_TO_CAR_RENTAL);
+  timest(list_bus_size(), VARIABLE_NQ_BUS);
   if (list_size[LIST_TERMINAL_2] > 0 && list_bus_size() < MAX_BUS_SIZE) {
     event_schedule(sim_time + uniform(15, 25, STREAM_LOADING), EVENT_LOAD_PERSON_TERMINAL_2);
   }else {
@@ -172,6 +187,7 @@ void arrival_person_car_rental () {
     transfer[DATA_DESTINATION] = DESTINATION_TERMINAL_2;
 
 	list_file(LAST, LIST_CAR_RENTAL);
+  timest(list_size[LIST_CAR_RENTAL], VARIABLE_NQ_CAR_RENTAL);
 
 	event_schedule(sim_time + expon(60.0 * 60.0 / 24.0, STREAM_INTERARRIVAL_CAR_RENTAL), EVENT_ARRIVAL_PERSON_CAR_RENTAL);
 }
@@ -191,6 +207,9 @@ void departure_bus_car_rental() {
   if ((sim_time - bus_last_arrival) < (5.0 * 60.0)){
     event_schedule(bus_last_arrival + 5.0 * 60.0, EVENT_DEPARTURE_BUS_CAR_RENTAL);
   }else {
+    sampst((sim_time - bus_last_departure_car_rental), VARIABLE_BUS_LOOP);
+    bus_last_departure_car_rental = sim_time;
+    sampst((sim_time - bus_last_arrival), VARIABLE_BUS_STOP_CAR_RENTAL);
     event_schedule(sim_time + 4.5 / 30.0 * 60.0 * 60.0, EVENT_ARRIVAL_BUS_TERMINAL_1);
   }
 }
@@ -198,6 +217,8 @@ void departure_bus_car_rental() {
 void unload_person_car_rental() {
   
   list_remove(FIRST, LIST_BUS_TO_CAR_RENTAL);
+  timest(list_bus_size(), VARIABLE_NQ_BUS);
+  sampst(sim_time - transfer[DATA_ARRIVAL_TIME], VARIABLE_PERSON_SYSTEM);
 
   if (list_size[LIST_BUS_TO_CAR_RENTAL] > 0) {
     event_schedule(sim_time + uniform(16, 24, STREAM_UNLOADING), EVENT_UNLOAD_PERSON_CAR_RENTAL);
@@ -210,7 +231,14 @@ void unload_person_car_rental() {
 
 void load_person_car_rental() {
   list_remove(FIRST, LIST_CAR_RENTAL);
-  list_file(LAST, LIST_BUS_TO_CAR_RENTAL);
+  timest(list_size[LIST_CAR_RENTAL], VARIABLE_NQ_CAR_RENTAL);
+  sampst((sim_time - transfer[DATA_ARRIVAL_TIME]), VARIABLE_DELAY_CAR_RENTAL);
+  if(transfer[DATA_DESTINATION] == DESTINATION_TERMINAL_1){
+    list_file(LAST, LIST_BUS_TO_TERMINAL_1);
+  } else {
+    list_file(LAST, LIST_BUS_TO_TERMINAL_2);
+  }
+  timest(list_bus_size(), VARIABLE_NQ_BUS);
   if (list_size[LIST_CAR_RENTAL] > 0 && list_bus_size() < MAX_BUS_SIZE) {
     event_schedule(sim_time + uniform(15, 25, STREAM_LOADING), EVENT_LOAD_PERSON_CAR_RENTAL);
   }else {
@@ -225,18 +253,8 @@ void init_model() {
   event_schedule(sim_time + 4.5 / 30.0 * 60.0 * 60.0, EVENT_ARRIVAL_BUS_TERMINAL_1); 
   event_schedule(sim_time + 80.0 * 60.0 * 60.0, EVENT_END_SIMULATION);
 
-  sampst(0, VARIABLE_NQ_TERMINAL_1);
-  sampst(0, VARIABLE_NQ_TERMINAL_2);
-  sampst(0, VARIABLE_NQ_CAR_RENTAL);
-  sampst(0, VARIABLE_DELAY_TERMINAL_1);
-  sampst(0, VARIABLE_DELAY_TERMINAL_2);
-  sampst(0, VARIABLE_DELAY_CAR_RENTAL);
-  sampst(0, VARIABLE_NQ_BUS);
-  sampst(0, VARIABLE_BUS_STOP_TERMINAL_1);
-  sampst(0, VARIABLE_BUS_STOP_TERMINAL_2);
-  sampst(0, VARIABLE_BUS_STOP_CAR_RENTAL);
-  sampst(0, VARIABLE_BUS_LOOP);
-  sampst(0, VARIABLE_PERSON_SYSTEM);
+  sampst(0.0, 0);
+  timest(0.0, 0);
 }
 
 void log_event() {
@@ -295,7 +313,7 @@ int main () {
 	init_model();
 	while (next_event_type != EVENT_END_SIMULATION) {
 		timing();
-    log_event();
+    // log_event();
 		switch(next_event_type) {
 			case EVENT_ARRIVAL_PERSON_TERMINAL_1:
 				arrival_person_terminal_1();
@@ -345,7 +363,8 @@ int main () {
     }
 	}
 
-  out_timest(stdout, VARIABLE_NQ_TERMINAL_1, VARIABLE_NQ_TERMINAL_1);
+  out_sampst(stdout, 1, 12);
+  out_timest(stdout, 1, 12);
 	printf("Finish time: %.5f\n", sim_time);
 	return 0;
 }
