@@ -60,6 +60,39 @@ int list_bus_size() {return list_size[LIST_BUS_TO_TERMINAL_1] + list_size[LIST_B
 
 double max(double a, double b) { return a > b ? a : b; }
 
+void print() {
+  timest(0,-VARIABLE_NQ_TERMINAL_1);
+  printf("(a) Average and maximum number in each queue \n     1. Terminal 1:\n       -Average: %.3lf\n       -Maximum: %.3lf\n", transfer[1], transfer[2]);
+  timest(0,-VARIABLE_NQ_TERMINAL_2);
+  printf("     2. Terminal 2:\n       -Average: %.3lf\n       -Maximum: %.3lf\n", transfer[1], transfer[2]);
+  timest(0,-VARIABLE_NQ_CAR_RENTAL);
+  printf("     3. Car Rental:\n       -Average: %.3lf\n       -Maximum: %.3lf\n", transfer[1], transfer[2]);
+
+  sampst(0,-VARIABLE_DELAY_TERMINAL_1);
+  printf("(b) Average and maximum delay in each queue \n     1. Terminal 1:\n       -Average: %.3lf\n       -Maximum: %.3lf\n", transfer[1], transfer[3]);
+  sampst(0,-VARIABLE_DELAY_TERMINAL_2);
+  printf("     2. Terminal 2:\n       -Average: %.3lf\n       -Maximum: %.3lf\n", transfer[1], transfer[3]);
+  sampst(0,-VARIABLE_DELAY_CAR_RENTAL);
+  printf("     3. Car Rental:\n       -Average: %.3lf\n       -Maximum: %.3lf\n", transfer[1], transfer[3]);
+  
+  printf("(c) Average and maximum number on the bus \n");
+  timest(0,-VARIABLE_NQ_BUS);
+  printf("     -Average: %.3lf\n     -Maximum: %.3lf\n", transfer[1], transfer[2]);
+  
+  sampst(0,-VARIABLE_BUS_STOP_TERMINAL_1);
+  printf("(d) Average, maximum, and minimum time bus stopped at each location \n     1. Terminal 1:\n       -Average: %.3lf\n       -Maximum: %.3lf\n       -Minimum: %.3lf\n", transfer[1], transfer[3], transfer[4]);
+  sampst(0,-VARIABLE_BUS_STOP_TERMINAL_2);
+  printf("     2. Terminal 2:\n       -Average: %.3lf\n       -Maximum: %.3lf\n       -Minimum: %.3lf\n", transfer[1], transfer[3], transfer[4]);
+  sampst(0,-VARIABLE_BUS_STOP_CAR_RENTAL);
+  printf("     3. Car Rental:\n       -Average: %.3lf\n       -Maximum: %.3lf\n       -Minimum: %.3lf\n", transfer[1], transfer[3], transfer[4]);
+
+  sampst(0,-VARIABLE_BUS_LOOP);
+  printf("(e) Average, maximum, and minimum time bus making a loop \n     -Average: %.3lf\n     -Maximum: %.3lf\n     -Minimum: %.3lf\n", transfer[1], transfer[3], transfer[4]);
+  
+  sampst(0,-VARIABLE_PERSON_SYSTEM);
+  printf("(f) Average, maximum, and minimum time person in the system \n     -Average: %.3lf\n     -Maximum: %.3lf\n     -Minimum: %.3lf\n", transfer[1], transfer[3], transfer[4]);
+}
+
 void arrival_person_terminal_1 () {
 	transfer[DATA_ARRIVAL_TIME] = sim_time;
 	transfer[DATA_DESTINATION] = DESTINATION_CAR_RENTAL;
@@ -296,8 +329,8 @@ void log_event() {
       printf("[ %.2lf ] EVENT_UNLOAD_PERSON_CAR_RENTAL\n", sim_time);     
       break;
     case EVENT_LOAD_PERSON_TERMINAL_1:
-        printf("[ %.2lf ] EVENT_LOAD_PERSON_TERMINAL_1\n", sim_time);     
-        break;
+      printf("[ %.2lf ] EVENT_LOAD_PERSON_TERMINAL_1\n", sim_time);     
+      break;
     case EVENT_LOAD_PERSON_TERMINAL_2:
       printf("[ %.2lf ] EVENT_LOAD_PERSON_TERMINAL_2\n", sim_time);     
       break;
@@ -362,9 +395,10 @@ int main () {
         break;
     }
 	}
-
   out_sampst(stdout, 1, 12);
   out_timest(stdout, 1, 12);
-	printf("Finish time: %.5f\n", sim_time);
+	printf("Finish time: %.5f\n\n", sim_time);
+  printf("=================STATISTICS=================\n");
+  print();
 	return 0;
 }
